@@ -1,0 +1,11 @@
+#pragma once
+
+/// 时间
+#include "../head/xysystem/time.h"
+/// 时间格式化
+#include "../head/xysystem/timefmt.h"
+
+namespace xyu
+{
+    using namespace xylu::xysystem;
+}

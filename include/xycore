@@ -1,0 +1,10 @@
+#pragma once
+
+#include "../link/new"
+#include "../link/range"
+#include "../link/string"
+#include "../link/format"
+#include "../link/file"
+#include "../link/time"
+#include "../link/log"
+#include "../link/compare"

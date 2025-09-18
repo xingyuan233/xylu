@@ -1,0 +1,8 @@
+#pragma once
+
+#include "../head/xyconc/condvar.h"
+
+namespace xyu
+{
+    using namespace xylu::xyconc;
+}

@@ -1,0 +1,135 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedMacroInspection"
+#pragma once
+
+#include "../head/xycore/log.h"
+
+namespace xyu
+{
+    using namespace xylu::xycore;
+}
+
+/**
+ * @brief 记录全局日志信息
+ * @param level 日志级别
+ * @param fmt 日志格式化字符串 (字符串常量)
+ * @param args 日志格式化参数 (不提供时直接输出 fmt)
+ * @return 是否输出成功 (内存分配失败, 或格式化信息失败，或文件写入失败[不包括无该等级日志文件情况]，返回 false)
+ */
+#define xylog(level, fmt, ...) \
+    xyu::flog.log(level, xyfmt(fmt, ##__VA_ARGS__))    // 调用时别忘了加括号
+
+/**
+ * @brief 记录日志信息
+ * @param logger 目标日志对象
+ * @param level 日志级别
+ * @param fmt 日志格式化字符串 (字符串常量)
+ * @param args 日志格式化参数 (不提供时直接输出 fmt)
+ * @return 是否输出成功 (内存分配失败, 或格式化信息失败，或文件写入失败[不包括无该等级日志文件情况]，返回 false)
+ */
+#define xylogt(logger, level, fmt, ...) \
+    logger.log(level, xyfmt(fmt, ##__VA_ARGS__))  // 调用时别忘了加括号
+
+/**
+ * @brief 条件记录全局日志信息
+ * @param level 日志级别
+ * @param mess 输出内容
+ * @note 若 level > XY_LOG_LEVEL 则不输出日志
+ */
+#define xylogm(level, mess) \
+    [&]() noexcept {  \
+        if constexpr (level <= xyu::K_LOG_LEVEL)  \
+            xyu::flog.log(level, mess); \
+    }()     // 调用时别忘了加括号
+
+/**
+ * @brief 条件记录全局日志信息
+ * @param level 日志级别
+ * @param level_limit 日志输出等级限制 [0,7]
+ * @param mess 输出内容
+ * @note 若 level > XY_LOG_LEVEL 或 level > level_limit 则不输出日志
+ */
+#define xylogl(level, level_limit, mess) \
+    [&]() {                                    \
+        if constexpr (level <= xyu::K_LOG_LEVEL && level <= level_limit)  \
+            xyu::flog.log(level, mess); \
+    }()     // 调用时别忘了加括号
+
+/**
+ * @brief 记录全局警告信息
+ * @param level_limit 日志输出等级限制 [0,7]
+ * @param fmt 日志格式化字符串 (字符串常量)
+ * @param args 日志格式化参数 (不提供时直接输出 fmt)
+ * @note 前缀: "__FILE__:__LINE__:__func__"
+ * @note 若 XY_LOG_LEVEL < xyu::N_LOG_WARN 或 level_limit < xyu::N_LOG_WARN 则不输出日志
+ */
+#define xylogw(level_limit, fmt, ...) \
+    [&](const char* func) {           \
+        if constexpr (xyu::N_LOG_WARN <= xyu::K_LOG_LEVEL && xyu::N_LOG_WARN <= level_limit) \
+            xylog(xyu::N_LOG_WARN, __FILE__ ":{}:{} " fmt, __LINE__, func, ##__VA_ARGS__); \
+    }(__func__)     // 调用时别忘了加括号
+
+/**
+ * @brief 记录全局警告信息
+ * @param level_limit 日志输出等级限制 [0,7]
+ * @param fmt 日志格式化字符串 (字符串常量)
+ * @param line 日志文件行号
+ * @param func 日志函数名
+ * @param args 日志格式化参数 (不提供时直接输出 fmt)
+ * @note 前缀: "__FILE__:Line:Func"
+ * @note 若 XY_LOG_LEVEL < xyu::N_LOG_WARN 或 level_limit < xyu::N_LOG_WARN 则不输出日志
+ */
+#define xylogw2(level_limit, fmt, line, func, ...) \
+    [&](const char* __func) {                                    \
+        if constexpr (xyu::N_LOG_WARN <= xyu::K_LOG_LEVEL && xyu::N_LOG_WARN <= level_limit) \
+            xylog(xyu::N_LOG_WARN, __FILE__ ":{}:{} " fmt, line, __func, ##__VA_ARGS__); \
+    }(func)     // 调用时别忘了加括号
+
+/**
+ * @brief 记录全局异常信息
+ * @param is_fetal 是否致命错误
+ * @param fmt 日志格式化字符串 (字符串常量)
+ * @param args 日志格式化参数
+ * @note 前缀: "__FILE__:__LINE__:__func__"
+ */
+#define xyloge(is_fetal, fmt, ...) \
+    [&](const char* func) {        \
+        constexpr auto __level = is_fetal ? xyu::N_LOG_FATAL : xyu::N_LOG_ERROR; \
+        if constexpr (__level <= xyu::K_LOG_LEVEL) \
+            xylog(__level, __FILE__ ":{}:{} " fmt, __LINE__, func, ##__VA_ARGS__); \
+    }(__func__)     // 调用时别忘了加括号
+
+/**
+ * @brief 记录全局异常信息
+ * @param is_fetal 是否致命错误
+ * @param fmt 日志格式化字符串 (字符串常量)
+ * @param line 日志文件行号
+ * @param func 日志函数名
+ * @param args 日志格式化参数
+ * @note 前缀: "__FILE__:Line:Func"
+ */
+#define xyloge2(is_fetal, fmt, line, func, ...) \
+    [&](const char* __func) {  \
+        constexpr auto __level = is_fetal ? xyu::N_LOG_FATAL : xyu::N_LOG_ERROR; \
+        if constexpr (__level <= xyu::K_LOG_LEVEL) \
+            xylog(__level, __FILE__ ":{}:{} " fmt, line, __func, ##__VA_ARGS__); \
+    }(func)     // 调用时别忘了加括号
+
+/**
+ * @brief 记录全局异常信息
+ * @param is_fetal 是否致命错误
+ * @param fmt 日志格式化字符串 (字符串常量)
+ * @param file 日志文件路径
+ * @param line 日志文件行号
+ * @param func 日志函数名
+ * @param args 日志格式化参数
+ * @note 前缀: "File:Line:Func"
+ */
+#define xyloge3(is_fetal, fmt, file, line, func, ...) \
+    [&](const char* __func) {  \
+        constexpr auto __level = is_fetal ? xyu::N_LOG_FATAL : xyu::N_LOG_ERROR; \
+        if constexpr (__level <= xyu::K_LOG_LEVEL) \
+            xylog(__level, "{+64}:{}:{} " fmt, file, line, __func, ##__VA_ARGS__); \
+    }(func)     // 调用时别忘了加括号
+
+#pragma clang diagnostic pop

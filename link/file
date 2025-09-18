@@ -1,0 +1,8 @@
+#pragma once
+
+#include "../head/xysystem/file.h"
+
+namespace xyu
+{
+    using namespace xylu::xysystem;
+}

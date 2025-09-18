@@ -1,0 +1,8 @@
+#pragma once
+
+#include "../head/xyconc/mutex.h"
+
+namespace xyu
+{
+    using namespace xylu::xyconc;
+}

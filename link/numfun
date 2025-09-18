@@ -1,0 +1,9 @@
+#pragma once
+
+/// 初等数论函数
+#include "../head/xymath/number.h"
+
+namespace xyu
+{
+    using namespace xylu::xymath;
+}

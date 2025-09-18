@@ -1,0 +1,104 @@
+#pragma once
+
+#include "../head/xycore/config.h"
+#include "../head/xycore/enum.h"
+
+namespace xyu
+{
+    using namespace xylu::xycore;
+}
+
+/// 检测与后续处理
+namespace xylu::xycore
+{
+    // 默认对齐检测
+    static_assert(K_DEFAULT_ALIGN, "K_DEFAULT_ALIGN must not be zero");
+    static_assert(!(K_DEFAULT_ALIGN & (K_DEFAULT_ALIGN - 1)), "K_DEFAULT_ALIGN must be power of 2");
+
+    // 日志等级检测
+    static_assert(XY_LOG_LEVEL >= XY_LOG_LEVEL_NONE && XY_LOG_LEVEL <= XY_LOG_LEVEL_ALL, "XY_LOG_LEVEL out of range");
+
+    // 内存序检测
+    static_assert(XY_ATOMIC_ORDER_RELAXED == __ATOMIC_RELAXED);
+    static_assert(XY_ATOMIC_ORDER_CONSUME == __ATOMIC_CONSUME);
+    static_assert(XY_ATOMIC_ORDER_ACQUIRE == __ATOMIC_ACQUIRE);
+    static_assert(XY_ATOMIC_ORDER_RELEASE == __ATOMIC_RELEASE);
+    static_assert(XY_ATOMIC_ORDER_ACQ_REL == __ATOMIC_ACQ_REL);
+    static_assert(XY_ATOMIC_ORDER_SEQ_CST == __ATOMIC_SEQ_CST);
+    static_assert(XY_ATOMIC_ORDER >= XY_ATOMIC_ORDER_RELAXED && XY_ATOMIC_ORDER <= XY_ATOMIC_ORDER_SEQ_CST, "XY_ATOMIC_ORDER out of range");
+
+    // 调试模式设置
+#if XY_DEBUG
+    //正常情况下noexcept但debug模式下会抛出异常 的宏
+    #define XY_NOEXCEPT_NDEBUG
+#else
+    //正常情况下noexcept但debug模式下会抛出异常 的宏
+    #define XY_NOEXCEPT_NDEBUG noexcept
+#endif
+
+    // SSE宏生成
+#if XY_SSE >= 10 && !defined(__SSE__)
+    #define __SSE__
+#elif XY_SSE < 10 && defined(__SSE__)
+    #undef __SSE__
+#endif
+#if XY_SSE >= 20 && !defined(__SSE2__)
+    #define __SSE2__
+#elif XY_SSE < 20 && defined(__SSE2__)
+    #undef __SSE2__
+#endif
+#if XY_SSE >= 30 && !defined(__SSE3__)
+    #define __SSE3__
+#elif XY_SSE < 30 && defined(__SSE3__)
+    #undef __SSE3__
+#endif
+#if XY_SSE >= 31 && !defined(__SSSE3__)
+    #define __SSSE3__
+#elif XY_SSE < 31 && defined(__SSSE3__)
+    #undef __SSSE3__
+#endif
+#if XY_SSE >= 41 && !defined(__SSE4_1__)
+    #define __SSE4_1__
+#elif XY_SSE < 41 && defined(__SSE4_1__)
+    #undef __SSE4_1__
+#endif
+#if XY_SSE >= 42 && !defined(__SSE4_2__)
+    #define __SSE4_2__
+#elif XY_SSE < 42 && defined(__SSE4_2__)
+    #undef __SSE4_2__
+#endif
+
+    // AVX宏生成
+#if XY_AVX >= 10 && !defined(__AVX__)
+    #define __AVX__
+#elif XY_AVX < 10 && defined(__AVX__)
+    #undef __AVX__
+#endif
+#if XY_AVX >= 20 && !defined(__AVX2__)
+    #define __AVX2__
+#elif XY_AVX < 20 && defined(__AVX2__)
+    #undef __AVX2__
+#endif
+}
+
+// 清理工具宏的定义
+#undef XY_LOG_LEVEL_NONE
+#undef XY_LOG_LEVEL_FATAL
+#undef XY_LOG_LEVEL_ERROR
+#undef XY_LOG_LEVEL_WARN
+#undef XY_LOG_LEVEL_INFO
+#undef XY_LOG_LEVEL_DEBUG
+#undef XY_LOG_LEVEL_TRACE
+#undef XY_LOG_LEVEL_ALL
+#undef XY_LOG_LEVEL
+
+#undef XY_ATOMIC_ORDER_RELAXED
+#undef XY_ATOMIC_ORDER_CONSUME
+#undef XY_ATOMIC_ORDER_ACQUIRE
+#undef XY_ATOMIC_ORDER_RELEASE
+#undef XY_ATOMIC_ORDER_ACQ_REL
+#undef XY_ATOMIC_ORDER_SEQ_CST
+#undef XY_ATOMIC_ORDER
+
+#undef XY_SSE
+#undef XY_AVX

@@ -1,0 +1,8 @@
+#pragma once
+
+#include "../head/xyrange/range.h"
+
+namespace xyu
+{
+    using namespace xylu::xyrange;
+}

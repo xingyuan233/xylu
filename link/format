@@ -1,0 +1,10 @@
+#pragma once
+
+#include "../head/xystring/fmtbase.h"
+#include "../head/xystring/fmtter.h"
+#include "../head/xystring/format.h"
+
+namespace xyu
+{
+    using namespace xylu::xystring;
+}

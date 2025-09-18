@@ -1,0 +1,8 @@
+#pragma once
+
+#include "../head/xycontain/hashtable.h"
+
+namespace xyu
+{
+    using namespace xylu::xycontain;
+}

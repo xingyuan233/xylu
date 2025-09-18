@@ -1,0 +1,30 @@
+#pragma once
+
+/// 类型属性基础
+#include "../head/xytraits/base.h"
+/// 类型 隐式转换 引用 修饰 相同
+#include "../head/xytraits/cvtrs.h"
+/// 类型布局属性
+#include "../head/xytraits/layout.h"
+
+/// 类型分类判断
+#include "../head/xytraits/kind.h"
+/// 类型属性修改
+#include "../head/xytraits/revise.h"
+
+/// 类|结构体属性
+#include "../head/xytraits/class.h"
+/// 类函数属性
+#include "../head/xytraits/func.h"
+/// 数值属性
+#include "../head/xytraits/numeric.h"
+
+/// 模板属性
+#include "../head/xytraits/tmpl.h"
+/// 拓展属性
+#include "../head/xytraits/expand.h"
+
+namespace xyu
+{
+    using namespace xylu::xytraits;
+}

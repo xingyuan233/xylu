@@ -1,0 +1,8 @@
+#pragma once
+
+#include "../head/xymemory/new.h"
+
+namespace xyu
+{
+    using namespace xylu::xymemory;
+}

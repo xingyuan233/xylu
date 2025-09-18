@@ -1,0 +1,8 @@
+#pragma once
+
+#include "../head/xystring/string.h"
+
+namespace xyu
+{
+    using namespace xylu::xystring;
+}

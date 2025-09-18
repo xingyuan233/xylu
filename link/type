@@ -1,0 +1,9 @@
+#pragma once
+
+/// 类型定义
+#include "../head/xycore/type.h"
+
+namespace xyu
+{
+    using namespace xylu::xycore;
+}

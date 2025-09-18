@@ -1,0 +1,8 @@
+#pragma once
+
+#include "../head/xycontain/tuple.h"
+
+namespace xyu
+{
+    using namespace xylu::xycontain;
+}

@@ -1,0 +1,8 @@
+#pragma once
+
+#include "../head/xymath/calc.h"
+
+namespace xyu
+{
+    using namespace xylu::xymath;
+}

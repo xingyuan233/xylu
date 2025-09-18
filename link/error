@@ -1,0 +1,8 @@
+#pragma once
+
+#include "../head/xycore/error.h"
+
+namespace xyu
+{
+    using namespace xylu::xycore;
+}

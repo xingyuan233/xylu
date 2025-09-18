@@ -1,0 +1,8 @@
+#pragma once
+
+#include "../head/xyrange/cmp.h"
+
+namespace xyu
+{
+    using namespace xylu::xyrange;
+}

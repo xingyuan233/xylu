@@ -1,0 +1,8 @@
+#pragma once
+
+#include "../head/xycontain/list.h"
+
+namespace xyu
+{
+    using namespace xylu::xycontain;
+}

@@ -1,0 +1,8 @@
+#pragma once
+
+#include "../head/xycontain/rbtree.h"
+
+namespace xyu
+{
+    using namespace xylu::xycontain;
+}

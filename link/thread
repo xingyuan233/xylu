@@ -1,0 +1,11 @@
+#pragma once
+
+#include "../head/xyconc/thread.h"
+
+// 导入线程库时配置检查
+static_assert(XY_UNTHREAD == 0, "cannot import xythread while XY_UNTHREAD is true");
+
+namespace xyu
+{
+    using namespace xylu::xyconc;
+}

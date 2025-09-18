@@ -1,0 +1,9 @@
+#pragma once
+
+/// 位运算相关函数
+#include "../head/xymath/bit.h"
+
+namespace xyu
+{
+    using namespace xylu::xymath;
+}
