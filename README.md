@@ -154,12 +154,9 @@
 - `xyu::Vector` 和范围for循环的无缝集成。
 
 ```cpp
-#include <xylu/core> 
+#include <xylu/xycore> 
 #include <xylu/xycontain>
 #include <xylu/xythread> 
-#include <xylu/error>
-
-#include <iostream>
 
 // 一个可能失败的异步任务
 double risky_division(double numerator, double denominator)
@@ -255,3 +252,4 @@ Items: [Orange | Orange | Apple | Banana | Cherry]
 
 
 本项目采用 **MIT License**。详情请见 `LICENSE` 文件。
+
