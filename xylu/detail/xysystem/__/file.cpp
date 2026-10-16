@@ -1,6 +1,11 @@
 #include "../file.h"
 #include "../../xystring/fmt.h"
 
+#if !XY_OUTPUT_ERROR_LOG
+#  undef xylog
+#  define xylog(...) 0
+#endif
+
 #define _FILE_OFFSET_BITS 64
 #include <cstdio>
 #include <cerrno>

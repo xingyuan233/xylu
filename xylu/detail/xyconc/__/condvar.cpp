@@ -1,6 +1,11 @@
 #include "../condvar.h"
 #include "../../xystring/fmt.h"
 
+#if !XY_OUTPUT_ERROR_LOG
+#  undef xylog
+#  define xylog(...) 0
+#endif
+
 #ifdef _WIN32
 #  include <windows.h>
 #else

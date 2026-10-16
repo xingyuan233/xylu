@@ -12,6 +12,11 @@
 #  include "../../xycoll/hash.h"
 #endif
 
+#if !XY_OUTPUT_ERROR_LOG
+#  undef xylog
+#  define xylog(...) 0
+#endif
+
 /// 多活跃锁位检查
 namespace
 {

@@ -4,6 +4,11 @@
 #include <bits/exception_ptr.h>
 #include "../../xystring/fmt.h"
 
+#if !XY_OUTPUT_ERROR_LOG
+#  undef xylog
+#  define xylog(...) 0
+#endif
+
 /// 异常指针
 namespace xylu::xycore
 {

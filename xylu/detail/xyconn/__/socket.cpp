@@ -1,6 +1,10 @@
 #include "../socket.h"
-
 #include "./wsainit.h"
+
+#if !XY_OUTPUT_ERROR_LOG
+#  undef xylog
+#  define xylog(...) 0
+#endif
 
 #ifdef _WIN32
 #  include <winsock2.h>

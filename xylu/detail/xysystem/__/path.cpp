@@ -3,10 +3,14 @@
 #include "../../xycoll/stack.h"
 #include "../../xycoll/queue.h"
 
+#if !XY_OUTPUT_ERROR_LOG
+#  undef xylog
+#  define xylog(...) 0
+#endif
+
 #ifdef _WIN32
 #  include <windows.h>
 #  include <shlwapi.h>
-#  include <winioctl.h>
 #else
 #  include <unistd.h>
 #  include <dirent.h>

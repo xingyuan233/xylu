@@ -1,5 +1,10 @@
 #include "../fmt.h"
 
+#if !XY_OUTPUT_ERROR_LOG
+#  undef xylog
+#  define xylog(...) 0
+#endif
+
 #define xyloge_unpack(fmt, ...) xyloge1(fmt, pos.file, pos.line, pos.func, ##__VA_ARGS__)
 
 namespace xylu::xystring::__

@@ -19,6 +19,11 @@
 #include "./wsainit.h"
 #include "../../xyconc/atomic.h"
 
+#if !XY_OUTPUT_ERROR_LOG
+#  undef xylog
+#  define xylog(...) 0
+#endif
+
 /// 跨平台转换工具
 namespace
 {

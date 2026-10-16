@@ -22,6 +22,8 @@ namespace xylu::xycore
 
     // 全局日志等级是否固定
     #define XY_FIXED_LOG_LEVEL 1
+    // 是否输出异常异常
+    #define XY_OUTPUT_ERROR_LOG 1
 
     /**
     * @brief CPU 支持的 SSE 指令集 版本

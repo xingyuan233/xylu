@@ -2,6 +2,11 @@
 #include "../smulio.h"
 #include "./wsainit.h"
 
+#if !XY_OUTPUT_ERROR_LOG
+#  undef xylog
+#  define xylog(...) 0
+#endif
+
 namespace xylu::xyconn::__
 {
     void abort_wsa_unsupport(int e) noexcept

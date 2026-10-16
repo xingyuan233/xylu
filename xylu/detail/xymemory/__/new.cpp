@@ -2,11 +2,13 @@
 #include <new>
 #include "../new.h"
 
-#include <cstring>
-#include "../../xycore/__/simd.h"
-
 #include "../pool.h"
 #include "../../xystring/fmt.h"
+
+#if !XY_OUTPUT_ERROR_LOG
+#  undef xylog
+#  define xylog(...) 0
+#endif
 
 #if !_GLIBCXX_HAVE_ALIGNED_ALLOC && !_GLIBCXX_HAVE__ALIGNED_MALLOC \
     && !_GLIBCXX_HAVE_POSIX_MEMALIGN && _GLIBCXX_HAVE_MEMALIGN

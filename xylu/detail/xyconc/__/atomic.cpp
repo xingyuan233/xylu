@@ -1,6 +1,11 @@
 #include "../atomic.h"
 #include "../../xystring/fmt.h"
 
+#if !XY_OUTPUT_ERROR_LOG
+#  undef xylog
+#  define xylog(...) 0
+#endif
+
 #include <cerrno>
 #include <cstdlib>
 #include <cstdint>
