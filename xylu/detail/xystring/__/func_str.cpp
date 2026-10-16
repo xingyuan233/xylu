@@ -8,6 +8,8 @@ using namespace xyu;
 /// 经测试后落选 (i9-13900HX, C++17编译)
 namespace xylu::xystring::__
 {
+    // 下方函数的参数均为窗口模式 i ∈ [start, end - tlen]
+
     // 滑动窗口 (处理 模式串长度 为 2) (不如 find_small)
     static size_t XY_NONNULL(1, 3) find_mvwin2(const uint8* str, size_t len, const uint8* target) noexcept
     {
@@ -414,14 +416,14 @@ namespace xylu::xystring::__
         return -1;
     }
 
-    // horspool + 双哈希 (字符随机，字符集大的情况下性能很好)
+    // horspool + 双哈希 (字符随机，字符集大的情况下性能很好) (tlen > 1)
     static size_t XY_NONNULL(1, 3) find_horspool(const uint8* str, size_t slen, const uint8* target, size_t tlen) noexcept
     {
         size_t m = tlen - 1;
 
-        auto hasher = [](const uint8* p)
+        auto hasher = [](const uint8* p) -> uint8
         {
-            return ((size_t)p[0] - ((size_t)p[-1] << 3)) & 255;
+            return ((uint)p[0] - ((uint)p[-1] << 3));
         };
 
         auto inner = [=](auto store) mutable -> size_t
@@ -429,38 +431,39 @@ namespace xylu::xystring::__
             // 1.预处理: 计算坏字符位移表
             decltype(store) shift[256]{0};
             for (size_t i = 1; i < m; i++)
-                // 基于字符对(target[i-1], target[i])计算哈希，并存入位移表
                 shift[hasher(target + i)] = i;
 
-            // 额外存储字符对的哈希匹对匹配，但模式串不全部匹配时的跳跃距离
+            // 字符串末尾哈希值
             uint8 he = hasher(target + m);
+            // 末尾匹配但模式串不全部匹配时的跳跃距离
             size_t sk = m - shift[he];
             shift[he] = m;
 
             // 2.主搜索循环
-            const auto* first = str;
+            const auto* p = str;
             const auto* last = str + slen - tlen;
             size_t tmp, offset = 0;
-            while (str <= last)
+            while (p <= last)
             {
                 // 跳过未出现的字符
                 do {
-                    str += m;
-                    tmp = shift[hasher(str)];
-                } while (tmp == 0 && str <= last);
+                    p += m;
+                    tmp = shift[hasher(p)];
+                } while (tmp == 0 && p <= last);
 
-                str -= tmp;
+                p -= tmp;
+                // 中间出现的字符，更新窗口位置到 s + (m - tmp) = (s + m) - tmp = p - tmp
                 if (tmp < m) continue;
 
-                // 末尾双字符匹配，快速跳过假阳性
-                if (m < 15 || mem_cmp(str + offset, target + offset, 8) == 0)
+                // 轮转预匹配
+                if (m < 15 || mem_cmp(p + offset, target + offset, 8) == 0)
                 {
-                    if (mem_cmp(str, target, m) == 0)
-                        return str - first;
+                    if (mem_cmp(p, target, m) == 0)
+                        return p - str;
                     offset = (offset >= 8 ? offset : m) - 8;
                 }
 
-                str += sk;
+                p += sk;
             }
 
             // 3.未找到
@@ -573,13 +576,7 @@ namespace xylu::xystring::__
 #if defined(__SSE2__) || defined(__ARM_NEON__)
         if (tlen >= 32) return find_sse(str, slen, target, tlen);
 #endif
-        if (str[slen] == '\0' && target[tlen] == '\0')
-        {
-            auto p = __builtin_strstr(str, target);
-            return p ? p - str : -1;
-        }
-        if (tlen * 4 < slen)
-            return find_horspool((const uint8*)str, slen, (const uint8*)target, tlen);
+        if (tlen * 4 < slen) return find_horspool((const uint8*)str, slen, (const uint8*)target, tlen);
         return find_easy(str, slen, target, tlen);
     }
 }
@@ -736,9 +733,9 @@ namespace xylu::xystring::__
     {
         size_t m = tlen - 1;
 
-        auto hasher = [](const uint8* p)
+        auto hasher = [](const uint8* p) -> uint8
         {
-            return ((size_t)p[0] - ((size_t)p[1] << 3)) & 255;
+            return ((uint)p[0] - ((uint)p[1] << 3));
         };
 
         auto inner = [=](auto store) mutable -> size_t

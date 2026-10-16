@@ -620,7 +620,9 @@ namespace xylu::xyrange
                 using Owner_t = xyu::t_cond<xyu::t_is_void<Owner>, __::get_owner<It>, Owner>;
 
                 It p;
-                constexpr Storage(const It& it = {}) noexcept(xyu::t_can_nothrow_cpconstr<It>) : p{it} {}
+                template <typename Test = It, typename = xyu::t_enable<xyu::t_can_dfconstr<Test>>>
+                constexpr Storage() noexcept(xyu::t_can_nothrow_dfconstr<It>) : p{} {}
+                constexpr Storage(const It& it) noexcept(xyu::t_can_nothrow_cpconstr<It>) : p{it} {}
                 constexpr Storage(It&& it) noexcept(xyu::t_can_nothrow_mvconstr<It>) : p{xyu::move(it)} {}
             };
 

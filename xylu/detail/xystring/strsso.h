@@ -197,9 +197,9 @@ namespace xylu::xystring
         CompactString& swap(CompactString& other) noexcept
         {
             char buf[sizeof(CompactString)];
-            xyu::mem_copy(buf, (void*)this, sizeof(CompactString));
-            xyu::mem_copy(this, &other, sizeof(CompactString));
-            xyu::mem_copy((void*)&other, buf, sizeof(CompactString));
+            xyu::mem_copy((CompactString*)buf, this, 1);
+            xyu::mem_copy(this, &other, 1);
+            xyu::mem_copy(&other, (CompactString*)buf, 1);
             return *this;
         }
 

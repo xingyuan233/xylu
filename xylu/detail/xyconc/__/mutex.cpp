@@ -15,6 +15,7 @@
 /// 多活跃锁位检查
 namespace
 {
+    // debug 下退出时可能因额外信息插入使 tls 析构顺序错误导致错误退出，默认关闭
 #define XY_USE_ALIVEGUARD XY_DEBUG && 0
 #if XY_USE_ALIVEGUARD
     class AliveGuard
@@ -106,7 +107,6 @@ namespace xylu::xyconc
     Mutex::Mutex() noexcept : h{}
     {
 #if XY_USE_ALIVEGUARD
-        // 去掉这行可能会引起tls释放顺序混乱
         alive_guard();
 #endif
 #ifdef _WIN32

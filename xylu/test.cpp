@@ -1,16 +1,17 @@
-#include <xylu/xystring/fmt.h>
-#include <xylu/xyrange/ops.h>
+#include "detail/xysystem/path.h"
+
+using namespace xyu;
 
 int main()
 {
-    xyu::StringView sv = "hello_world";
-    xyu::String str;
-    for (auto c : sv.range()
-        | xyu::RangeOps::split([](char c) { return c == '_'; })
-        | xyu::RangeOps::join(',') | xyu::RangeOps::concat(xyu::StringView{"!"}))
-    str << c;
-    str.replacec(str.data(), "hw", 0xE0u);
-    xyu::xyout << str;
+    try {
 
+        auto walker = Path{}.walk(Path::WT_DFS);
+        for (auto info : walker.range())
+            xyout << info.name << '\n';
+
+    } catch (...) {
+        xyerr << "error catched\n";
+    }
     return 0;
 }

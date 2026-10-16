@@ -726,18 +726,27 @@ namespace xylu::xysystem
     }
     File File::fin() noexcept
     {
+#ifdef _WIN32
+        SetConsoleCP(CP_UTF8);
+#endif
         File f;
         f.h = stdin;
         return f;
     }
     File File::fout() noexcept
     {
+#ifdef _WIN32
+        SetConsoleOutputCP(CP_UTF8);
+#endif
         File f;
         f.h = stdout;
         return f;
     }
     File File::ferr() noexcept
     {
+#ifdef _WIN32
+        SetConsoleOutputCP(CP_UTF8);
+#endif
         File f;
         f.h = stderr;
         return f;

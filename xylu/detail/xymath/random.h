@@ -4,6 +4,10 @@
  * @file    xymath/random.h
  * @brief   随机数
  * @date    2026-08-28
+ *
+ * @details
+ *   依赖库：
+ *   - Windows下需要链接 bcrypt
  */
 
 #include "./func.h"
@@ -18,7 +22,7 @@ namespace xylu::xymath
      * @brief 加密随机数获取
      * @details
      *   获取方式
-     *   - windows下通过 BCryptGenRandom，需要链接 bcrypt
+     *   - windows下通过 BCryptGenRandom
      *   - 类Unix下通过 getrandom
      */
     struct RandSafe

@@ -358,13 +358,13 @@ namespace xylu::xysystem
         /// 创建临时文件 (可读可写)
         static File ftmp(xyu::ES_File& state) noexcept;
 
-        /// 获取标准输入文件 (只读)
+        /// 获取标准输入文件，utf8编码 (只读)
         static File fin() noexcept;
 
-        /// 获取标准输出文件 (只写)
+        /// 获取标准输出文件，utf8编码 (只写)
         static File fout() noexcept;
 
-        /// 获取标准错误文件 (只写)
+        /// 获取标准错误文件，utf8编码 (只写)
         static File ferr() noexcept;
 
     public:

@@ -259,6 +259,7 @@ namespace xylu::xycoll
             using Iter = xyu::t_chg_iter<xyu::Iterator_Ptr<T>, xyu::IterTag::Storage, Storage,
                 xyu::IterTag::Dereference, Dereference, xyu::IterTag::Address, Address>;
             Iter begin{data()+h, data()+Capa};
+            if (n == 0) return xyu::make_range(0, begin, begin);
             Iter end{h > t ? data()+t+Capa+1 : data()+t+1, data()+Capa};
             return xyu::make_range(n, begin, end);
         }
@@ -600,7 +601,7 @@ namespace xylu::xycoll
             xyu::size_t num = xyu::min(count, n);
             for (xyu::size_t i = 0; i < num; ++i)
             {
-                data()[h].~T();
+                data[h].~T();
                 h = fix_index(h + 1);
             }
             n -= num;
@@ -614,8 +615,9 @@ namespace xylu::xycoll
             using Iter = xyu::t_chg_iter<xyu::Iterator_Ptr<T>, xyu::IterTag::Storage, Storage,
                 xyu::IterTag::Dereference, Dereference, xyu::IterTag::Address, Address>;
             Iter begin{data+h, data+capa, capa};
+            if (n == 0) return xyu::make_range(0, begin, begin);
             Iter end{h > t ? data+t+capa+1 : data+t+1, data+capa, capa};
-            return xyu::Range<Iter>(n, begin, end);
+            return xyu::make_range(n, begin, end);
         }
         /// 获取范围 (const)
         auto range() const noexcept { return const_cast<NearQueue*>(this)->range().crange(); }

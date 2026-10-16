@@ -39,43 +39,119 @@ namespace xylu::xytraits
     constexpr bool t_is_gen = []
     {
         if constexpr (!t_is_siter<T...>) return false;
-        else return (... && xyu::t_is_void<typename xyu::t_rem_cr<T>::Equal_t>) &&
-                    (... && xyu::t_is_void<typename xyu::t_rem_cr<T>::Compare_t>);
+        else return (... && t_is_void<typename t_rem_cr<T>::Equal_t>) &&
+                    (... && t_is_void<typename t_rem_cr<T>::Compare_t>);
     }();
 }
 
 /// 基础生成器策略
 namespace xylu::xyrange
 {
-    namespace GenPolicies::Normal
+    namespace GenPolicies
     {
-        // 恒有效
-        struct AlwaysValid
+        namespace Normal
         {
-            template <typename Gen>
-            constexpr bool operator()(const Gen&) noexcept { return true; }
-        };
+            // 恒有效
+            struct AlwaysValid
+            {
+                template <typename Gen>
+                constexpr bool operator()(const Gen&) noexcept { return true; }
+            };
 
-        // 解引用获取自身
-        struct SelfDeref
-        {
-            template <typename Gen>
-            constexpr decltype(auto) operator()(Gen& gen) noexcept { return (gen.p); }
-        };
+            // 解引用获取自身
+            struct SelfDeref
+            {
+                template <typename Gen>
+                constexpr decltype(auto) operator()(Gen& gen) noexcept { return (gen.p); }
+            };
 
-        // 解引用获取自身
-        struct CopyDeref
-        {
-            template <typename Gen>
-            constexpr auto operator()(Gen& gen) noexcept { return gen.p; }
-        };
+            // 解引用获取自身
+            struct CopyDeref
+            {
+                template <typename Gen>
+                constexpr auto operator()(Gen& gen) noexcept { return gen.p; }
+            };
 
-        // 空自增
-        struct Empty
+            // 空自增
+            struct Empty
+            {
+                template <typename... T>
+                constexpr void operator()(T&&...) noexcept {}
+            };
+        }
+
+        /// 二级指针策略
+        namespace Refer
         {
-            template <typename... T>
-            constexpr void operator()(T&&...) noexcept {}
-        };
+            // 解引用后转为 bool
+            struct Valid
+            {
+                template <typename Iter>
+                constexpr bool operator()(const Iter& it) noexcept(noexcept(static_cast<bool>(*it.p)))
+                { return static_cast<bool>(*it.p); }
+            };
+
+            // 解引用后解引用
+            struct Dereference
+            {
+                template <typename Iter>
+                constexpr decltype(auto) operator()(Iter& it) noexcept(noexcept(**it.p))
+                {
+                    if constexpr (!XY_RELEASE && xyu::t_is_pointer<decltype(*it.p)>)
+                        if (XY_UNLIKELY(*it.p == nullptr))
+                            xyu::E_Logic::abort_null_pointer(XY_CurPos("Iterator::Dereference"));
+                    return **it.p;
+                }
+            };
+
+            // 解引用后自增
+            struct Increment
+            {
+                template <typename Iter>
+                constexpr void operator()(Iter& it) noexcept(noexcept(++*it.p))
+                {
+                    if constexpr (XY_DEBUG && xyu::t_is_pointer<decltype(*it.p)>) if (!xyu::t_constant())
+                        xyu::calc_of_add<xyu::size_t>(xyu::size_t(*it.p), 1u, XY_CurPos("Iterator::Increment"));
+                    ++*it.p;
+                }
+            };
+
+            // 解引用后自减
+            struct Decrement
+            {
+                template <typename Iter>
+                constexpr void operator()(Iter& it) noexcept(noexcept(--*it.p))
+                {
+                    if constexpr (XY_DEBUG && xyu::t_is_pointer<decltype(*it.p)>) if (!xyu::t_constant())
+                        xyu::calc_of_sub<xyu::size_t>(xyu::size_t(*it.p), 1u, XY_CurPos("Iterator::Decrement"));
+                    --*it.p;
+                }
+            };
+
+            // 解引用后前进
+            struct Forward
+            {
+                template <typename Iter, typename Diff>
+                constexpr void operator()(Iter& it, Diff step) noexcept(noexcept(*it.p += step))
+                {
+                    if constexpr (XY_DEBUG && xyu::t_is_pointer<decltype(*it.p)>) if (!xyu::t_constant())
+                        xyu::calc_of_add<xyu::size_t>(xyu::size_t(*it.p), step, XY_CurPos("Iterator::Forward"));
+                    *it.p += step;
+                }
+            };
+
+            // 解引用后后退
+            struct Backward
+            {
+                template <typename Iter, typename Diff>
+                constexpr void operator()(Iter& it, Diff step) noexcept(noexcept(*it.p -= step))
+                {
+                    if constexpr (XY_DEBUG && xyu::t_is_pointer<decltype(*it.p)>) if (!xyu::t_constant())
+                        xyu::calc_of_sub<xyu::size_t>(xyu::size_t(*it.p), step, XY_CurPos("Iterator::Backward"));
+                    *it.p -= step;
+                }
+            };
+        }
     }
 }
 

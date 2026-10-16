@@ -40,7 +40,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 target_link_libraries(test PRIVATE
         xylu
-        $<$<PLATFORM_ID:Windows>:ws2_32 bcrypt crypt32>
+        $<$<PLATFORM_ID:Windows>:ws2_32 bcrypt>
         $<$<NOT:$<PLATFORM_ID:Windows>>:uring>
 )
 
@@ -50,6 +50,6 @@ target_compile_options(test2 PRIVATE -ffile-prefix-map=${CMAKE_SOURCE_DIR}/=./)
 target_compile_options(test2 PRIVATE -mavx2 -msse4.2)
 target_link_libraries(test2 PRIVATE
         xylu
-        $<$<PLATFORM_ID:Windows>:ws2_32 bcrypt crypt32>
+        $<$<PLATFORM_ID:Windows>:ws2_32 bcrypt>
         $<$<NOT:$<PLATFORM_ID:Windows>>:uring>
 )

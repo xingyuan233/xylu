@@ -103,10 +103,14 @@ namespace xylu::xystring
 
         /* 查找 */
 
-         /// 从 [start, end) 范围内，查找 字符串 首次出现的索引，未找到返回 -1
+         /// 从 [start, end) 范围内，查找 字符串 首次出现的索引，未找到返回 -1，若找到返回索引为 [start, end - tlen]
         constexpr xyu::size_t find(StringView target, xyu::size_t start = 0, xyu::size_t end = -1) const noexcept;
-        /// 从 [start, end) 范围内，查找 字符串 最后一次出现的索引，未找到返回 -1
+        /// 从 [start, end) 范围内，查找 字符串 最后一次出现的索引，未找到返回 -1，若找到返回索引为 [start, end - tlen]
         constexpr xyu::size_t rfind(StringView target, xyu::size_t start = 0, xyu::size_t end = -1) const noexcept;
+        /// 从 [start, end + tlen - 1) 范围内，查找 字符串 首次出现的索引，未找到返回 -1，若找到返回索引为 [start, end)
+        constexpr xyu::size_t findi(StringView target, xyu::size_t start = 0, xyu::size_t end = -1) const noexcept;
+        /// 从 [start, end + tlen - 1) 范围内，查找 字符串 最后一次出现的索引，未找到返回 -1，若找到返回索引为 [start, end)
+        constexpr xyu::size_t rfindi(StringView target, xyu::size_t start = 0, xyu::size_t end = -1) const noexcept;
 
         /// 从 [start, end) 范围内，查找 字符 首次出现的索引，未找到返回 -1
         constexpr xyu::size_t find(char c, xyu::size_t start = 0, xyu::size_t end = -1) const noexcept;
@@ -436,14 +440,6 @@ namespace xylu::xystring
 
     namespace __
     {
-        XY_ALWAYS_INLINE constexpr bool fix_param(xyu::size_t& start, xyu::size_t& end, xyu::size_t size) noexcept
-        {
-            if (XY_UNLIKELY(start >= size)) return true;
-            if (end > size) end = size;
-            else if (XY_UNLIKELY(start >= end)) return true;
-            return false;
-        }
-
         XY_ALWAYS_INLINE constexpr xyu::size_t fix_ret(xyu::size_t ret, xyu::size_t offset) noexcept
         {
             return ret != -1 ? ret + offset : -1;
@@ -458,9 +454,11 @@ namespace xylu::xystring
     template <typename ST>
     constexpr xyu::size_t StringViewBase<ST>::find(StringView target, xyu::size_t start, xyu::size_t end) const noexcept
     {
-        if (XY_UNLIKELY(__::fix_param(start, end, size()))) return -1;
-        if (XY_UNLIKELY(target.empty())) return start;
-        if (XY_UNLIKELY(end - start < target.size())) return -1;
+        xyu::size_t slen = size();
+        if (XY_UNLIKELY(start >= slen)) return -1;
+        if (end > slen) end = slen;
+        if (XY_UNLIKELY(end < start + target.size())) return -1;
+        if (XY_UNLIKELY(target.empty())) return end - 1;
 
         if (xyu::t_constant())
         {
@@ -474,9 +472,11 @@ namespace xylu::xystring
     template <typename ST>
     constexpr xyu::size_t StringViewBase<ST>::rfind(StringView target, xyu::size_t start, xyu::size_t end) const noexcept
     {
-        if (XY_UNLIKELY(__::fix_param(start, end, size()))) return -1;
+        xyu::size_t slen = size();
+        if (XY_UNLIKELY(start >= slen)) return -1;
+        if (end > slen) end = slen;
+        if (XY_UNLIKELY(end < start + target.size())) return -1;
         if (XY_UNLIKELY(target.empty())) return start;
-        if (XY_UNLIKELY(end - start < target.size())) return -1;
 
         if (xyu::t_constant())
         {
@@ -487,9 +487,55 @@ namespace xylu::xystring
         }
         return __::fix_ret(__::rfind(data() + start, end - start, target.data(), target.size()), start);
     }
+    template <typename ST>
+    constexpr xyu::size_t StringViewBase<ST>::findi(StringView target, xyu::size_t start, xyu::size_t end) const noexcept
+    {
+        xyu::size_t slen = size();
+        if (XY_UNLIKELY(start >= slen)) return -1;
+        if (XY_UNLIKELY(slen < target.size())) return -1;
+        if (end >= slen - target.size() + 1) end = slen - target.size() + 1;
+        if (XY_UNLIKELY(end < start)) return -1;
+        if (XY_UNLIKELY(target.empty())) return start;
+
+        if (xyu::t_constant())
+        {
+            const char* p = data();
+            for (xyu::size_t i = start; i < end; ++i)
+                if (p[i] == target[0] && strcmp(p + i, target.data(), target.size()) == 0) return i;
+            return -1;
+        }
+        return __::fix_ret(__::find(data() + start, end - start + target.size() - 1, target.data(), target.size()), start);
+    }
+    template <typename ST>
+    constexpr xyu::size_t StringViewBase<ST>::rfindi(StringView target, xyu::size_t start, xyu::size_t end) const noexcept
+    {
+        xyu::size_t slen = size();
+        if (XY_UNLIKELY(start >= slen)) return -1;
+        if (XY_UNLIKELY(slen < target.size())) return -1;
+        if (end >= slen - target.size() + 1) end = slen - target.size() + 1;
+        if (XY_UNLIKELY(end < start)) return -1;
+        if (XY_UNLIKELY(target.empty())) return end - 1;
+
+        if (xyu::t_constant())
+        {
+            const char* p = data();
+            xyu::size_t i = end;
+            while (i > start) if (--i, p[i] == target[0] && strcmp(p + i, target.data(), target.size()) == 0) return i;
+            return -1;
+        }
+        return __::fix_ret(__::rfind(data() + start, end - start + target.size() - 1, target.data(), target.size()), start);
+    }
 
     namespace __
     {
+        XY_ALWAYS_INLINE constexpr bool fix_param(xyu::size_t& start, xyu::size_t& end, xyu::size_t size) noexcept
+        {
+            if (XY_UNLIKELY(start >= size)) return true;
+            if (end > size) end = size;
+            else if (XY_UNLIKELY(start >= end)) return true;
+            return false;
+        }
+
         template <typename LoopFunc> XY_NO_VECTORIZE_GCC
         constexpr xyu::size_t find_constexpr_help(const char* p, xyu::size_t start, xyu::size_t end, LoopFunc&& lf) noexcept
         {
