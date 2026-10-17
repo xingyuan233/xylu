@@ -37,7 +37,6 @@ namespace xylu::xystring
         // 基数
         enum { HEX, DEC, OCT, BIN, CHAR } base = DEC;
 
-        // 解析整数
         constexpr Format_Int& parse(StringView rep) noexcept
         {
             for (char c : rep.range())
@@ -70,7 +69,6 @@ namespace xylu::xystring
         bool is_str = true; // 是否输出字符串
         bool upper = false; // 是否输出大写
 
-        // 解析bool
         constexpr Format_Bool& parse(StringView rep) noexcept
         {
             for (char c : rep.range())
@@ -100,27 +98,26 @@ namespace xylu::xystring
         // 精度索引 (sp->. op->数字后)
         xyu::uint sp = -1, op = -1;
         // 格式串
-        const StringView* rep = nullptr;
+        StringView rep;
 
-        // 解析bool
         constexpr Format_Float& parse(StringView represent) noexcept
         {
-            rep = &represent;
-            for (int i = 0; i < represent.size(); ++i)
+            rep = represent;
+            for (int i = 0; i < rep.size(); ++i)
             {
-                switch (represent[i])
+                switch (rep[i])
                 {
                     case '+': ps_sign = POSITIVE; break;
                     case '-': ps_sign = SPACE; break;
                     case '#': alt = true; break;
                     case '~': alt = false; break;
                     case 'f': case 'F': case 'e': case 'E':
-                    case 'g': case 'G': case 'a': case 'A': specifier = represent[i]; break;
+                    case 'g': case 'G': case 'a': case 'A': specifier = rep[i]; break;
                     case '.': {
                         sp = i;
-                        while (++i < represent.size() && represent[i] >= '0' && represent[i] <= '9');
+                        while (++i < rep.size() && rep[i] >= '0' && rep[i] <= '9');
                         op = i;
-                        if (i != represent.size()) --i;
+                        if (i != rep.size()) --i;
                         break;
                     }
                 }
@@ -133,7 +130,7 @@ namespace xylu::xystring
         {
             if (sp == -1) return 6;
             xyu::uint precision = 0;
-            for (auto p = sp + 1; p < op; ++p) precision = precision * 10 + (rep->get(p) - '0');
+            for (auto p = sp + 1; p < op; ++p) precision = precision * 10 + (rep[p] - '0');
             return precision;
         }
     };
@@ -562,7 +559,8 @@ namespace xylu::xystring
                 xyu::uint clen = is_single ? 1 : (5 - value);
                 xyu::uint flen = fl.width - clen;
                 // 布局
-                auto tostr = [&]() {
+                auto tostr = [&]
+                {
                     if (!is_single) out << StringView(fb.upper ? (value ? "TRUE" : "FALSE") : (value ? "true" : "false"));
                     else out << (fb.is_str ? (fb.upper ? (value ? 'T' : 'F') : (value ? 't' : 'f')) : (value ? '1' : '0'));
                 };
@@ -625,7 +623,7 @@ namespace xylu::xystring
         {
             xyu::uint plen = ff.op - ff.sp;
             if constexpr (!XY_RELEASE) if (XY_UNLIKELY(plen > 3))
-                xyu::E_Format_Rep::abort_precision_over_limit(ff.rep->subview(ff.sp + 1, plen - 1),
+                xyu::E_Format_Rep::abort_precision_over_limit(ff.rep.subview(ff.sp + 1, plen - 1),
                                                               XY_CurPos("FormatImpl::parse_runtime"));
             //---- 分配格式化空间 ----
             char sfmt[64];
@@ -636,7 +634,7 @@ namespace xylu::xystring
             if (ff.alt) *p++ = '#';
             // 精度
             if (ff.sp != -1) {
-                xyu::mem_copy(p, ff.rep->data() + ff.sp, plen);
+                xyu::mem_copy(p, ff.rep.data() + ff.sp, plen);
                 p += plen;
             }
             // 长
@@ -648,7 +646,7 @@ namespace xylu::xystring
             //---- 格式化长度 ----
             bool ps_sign = ff.ps_sign != Format_Float::EMPTY && value > 0;
             int need = __builtin_snprintf(nullptr, 0, sfmt, value);
-            if (XY_UNLIKELY(need < 0)) xyu::E_Format_Rep::abort_invalid_float_rep(*ff.rep, XY_CurPos("FormatImpl::parse_runtime"));
+            if (XY_UNLIKELY(need < 0)) xyu::E_Format_Rep::abort_invalid_float_rep(ff.rep, XY_CurPos("FormatImpl::parse_runtime"));
             return xyu::max(need + ps_sign, fl.width);
         }
         /// 运行期解析浮点格式 (转发)
@@ -670,7 +668,7 @@ namespace xylu::xystring
             // 替代形式
             if (ff.alt) *p++ = '#';
             // 精度
-            if (ff.sp != -1) xyu::mem_copy(p, ff.rep->data() + ff.sp, plen), p += plen;
+            if (ff.sp != -1) xyu::mem_copy(p, ff.rep.data() + ff.sp, plen), p += plen;
             // 长
             if constexpr (xyu::t_is_same_noconst<T, long double>) *p++ = 'L';
             // 转换符
@@ -685,6 +683,7 @@ namespace xylu::xystring
                 need = __builtin_snprintf(buf.data(), buf.capacity() + 1, sfmt, value);
             }
             buf.resize(need);
+            if (ff.sp == -1) buf.resize(buf.rstrip('0').rstrip('.').size());
 
             //-- 符号 --
             bool ps_sign = ff.ps_sign != Format_Float::EMPTY && value > 0;

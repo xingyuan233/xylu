@@ -101,7 +101,7 @@ namespace xylu::xystring
                     }
                 }
                 // 自动选择最近的单位
-                if (fd.stype != None && fd.ttype == Auto)
+                if (fd.ttype == Auto)
                 {
                     if constexpr (D{1} >= xyu::Duration_year<T>{1}) fd.ttype = Year, fd.unless = xyu::t_is_same<xyu::Duration_year<T>, xyu::t_wide<D, xyu::Duration_year<T>>>;
                 #define XY_ttype_choose_gen( kind, name ) \
@@ -141,7 +141,7 @@ namespace xylu::xystring
         }
 
         /// 运行期解析时间段格式串
-        static xyu::size_t parse_runtime(const D& d, StringView fl, StringView represent, StringView expand) noexcept
+        static xyu::size_t parse_runtime(const D& d, Format_Layout fl, StringView represent, StringView expand) noexcept
         {
             Format_Duration fd = Format_Duration::parse(expand);
             xyu::size_t count = fd.stype != Format_Duration::None ? Format_Duration::suffixs[fd.stype][fd.ttype].size() : 0;

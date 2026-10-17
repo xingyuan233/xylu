@@ -1,4 +1,4 @@
-#include "detail/xysystem/path.h"
+#include "detail/xystring/fmt.h"
 
 using namespace xyu;
 
@@ -6,9 +6,8 @@ int main()
 {
     try {
 
-        auto walker = Path{}.walk(Path::WT_DFS);
-        for (auto info : walker.range())
-            xyout << info.name << '\n';
+        for (int i = 0; i <= 3; ++i)
+            xyout << format("{ {} ? {}{}{}}\n", i, 1, 2, 3);
 
     } catch (...) {
         xyerr << "error catched\n";

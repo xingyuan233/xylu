@@ -26,6 +26,12 @@ namespace xylu::xycore
         xyu::abort();
     }
 
+    void E_Format::abort_env_invalid_param(xyu::StringView env, ErrorPos pos) noexcept
+    {
+        xyloge_unpack("invalid env param with {}", env);
+        xyu::abort();
+    }
+
     void E_Format::abort_syntax_uncompleted_placeholder(ErrorPos pos) noexcept
     {
         xyloge_unpack("syntax uncompleted placeholder");

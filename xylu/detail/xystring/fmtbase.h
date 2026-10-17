@@ -41,6 +41,9 @@ namespace xylu::xycore
         // env错误: 索引过大
         [[noreturn]] static void abort_env_index_over_limit(xyu::StringView index, ErrorPos) noexcept XY_COLD;
 
+        // env错误: 不支持的参数
+        [[noreturn]] static void abort_env_invalid_param(xyu::StringView env, ErrorPos) noexcept XY_COLD;
+
         // lay错误: 未指定宽度
         [[noreturn]] static void abort_lay_no_width(ErrorPos) noexcept XY_COLD;
 
@@ -287,7 +290,6 @@ namespace xylu::xystring
             static_assert(E != E_DYFMT_NOT_NUMBER, "dynamic-fmt's index is not a number");
             static_assert(E != E_DYFMT_INDEX_OVER_LIMIT, "dynamic-fmt's index is over limit");
             static_assert(E != E_DYFMT_UNALLOWED_TYPE, "dynamic-fmt's type is not allowed"); // 字符/字符串/整数
-            static_assert(E == E_NONE);
         }
 
         /// 编译期解析结果
@@ -384,20 +386,16 @@ namespace xylu::xystring
                         while (++k != i && fmt[k] == ' ');  // 前空格
                         // 指定索引
                         xyu::size_t cur = index;
-                        if (k != i)
+                        if (k != i) for (cur = 0;;)
                         {
-                            cur = 0;
-                            for (;;)
-                            {
-                                if (!__::is_digit(fmt[k])) return {E_DYFMT_NOT_NUMBER};
-                                cur = cur * 10 + (fmt[k] - '0');
-                                if (cur > limit / 16) return {E_DYFMT_INDEX_OVER_LIMIT};
-                                if (++k == i) break;
-                                // 尾空格
-                                if (fmt[k] == ' ') {
-                                    while (++k != i) if (fmt[k] != ' ') return {E_DYFMT_NOT_NUMBER};
-                                    break;
-                                }
+                            if (!__::is_digit(fmt[k])) return {E_DYFMT_NOT_NUMBER};
+                            cur = cur * 10 + (fmt[k] - '0');
+                            if (cur > limit / 16) return {E_DYFMT_INDEX_OVER_LIMIT};
+                            if (++k == i) break;
+                            // 尾空格
+                            if (fmt[k] == ' ') {
+                                while (++k != i) if (fmt[k] != ' ') return {E_DYFMT_NOT_NUMBER};
+                                break;
                             }
                         }
                         if (XY_UNLIKELY(cur >= sizeof...(Args))) return {E_TOO_BIG_INDEX};
@@ -507,17 +505,19 @@ namespace xylu::xystring
             do {
                 // 查找另一半'}'
                 i = fmt.find('}', ++j);
-                StringView partfmt = fmt.subview(j, i - j);
                 // 查找动态参数
+                Format_Spec spec;
                 if constexpr (dynamic)
                 {
                     k = j + 1;
                     if ((k = fmt.find('{', k, i)) != -1)
                     {
+                        xyu::uint spec_pos[4] {-1u, -1u, -1u, -1u};
                         p = j;
                         dybuf.clear();
                         do {
                             dybuf << fmt.subview(p, k - p);
+                            update_spec(spec_pos, dybuf, k - p);
                             // 动态参数必须为 空的 "{}" 或 带索引的 "{n}"
                             while (++k != i && fmt[k] == ' ');  // 跳过前空格
                             // 指定索引
@@ -539,12 +539,13 @@ namespace xylu::xystring
                         }
                         while ((k = fmt.find('{', k, i)) != -1);
                         dybuf << fmt.subview(p, i - p);
-                        partfmt = dybuf.view();
+                        update_spec(spec_pos, dybuf, i - p);
+                        finish_spec(spec_pos, dybuf, spec);
                     }
+                    else spec = parse_spec(fmt.subview(j, i - j));
                 }
+                else spec = parse_spec(fmt.subview(j, i - j));
 
-                /// 解析模式
-                Format_Spec spec = parse_spec(partfmt);
                 // 解析 env
                 xyu::size_t cur = parse_idx(spec.env, index);
                 // 解析 lay
@@ -602,7 +603,6 @@ namespace xylu::xystring
                 }
             };
 
-
             /// 循环解析
             String dybuf;           // 动态参数缓存
             xyu::size_t total = 0;  // 总可能长度
@@ -614,17 +614,17 @@ namespace xylu::xystring
                 // 不完整的模式
                 if constexpr (!XY_RELEASE) if (XY_UNLIKELY(j == fmt.size() - 1))
                     xyu::E_Format::abort_syntax_uncompleted_placeholder(XY_CurPos("FormatCore::parse_runtime"));
-                // 查找中间可能出现的 '}' 转义 或 错误格式 .i
+                // 查找中间可能出现的 '}' 转义 或 错误格式
                 total += j - i;
                 while ((i = fmt.find('}', i, j)) != -1)
                 {
                     // 不完整的模式 且 不是转义 '}'
+                    ++i;
                     if constexpr (!XY_RELEASE)
                     {
-                        if (XY_UNLIKELY(++i == j || fmt[i] != '}'))
+                        if (XY_UNLIKELY(i == j || fmt[i] != '}'))
                             xyu::E_Format::abort_syntax_uncompleted_placeholder(XY_CurPos("FormatCore::parse_runtime"));
                     }
-                    else ++i;
                     ++i;
                     --total; // 转义 '}'
                 }
@@ -636,14 +636,16 @@ namespace xylu::xystring
                     if constexpr (!XY_RELEASE) if (XY_UNLIKELY(i == -1))
                         xyu::E_Format::abort_syntax_uncompleted_placeholder(XY_CurPos("FormatCore::parse_runtime"));
                     // 查找动态参数
-                    StringView partfmt;
+                    Format_Spec spec;
                     k = j + 1;
                     if ((k = fmt.find('{', k, i)) != -1)
                     {
+                        xyu::uint spec_pos[4] {-1u, -1u, -1u, -1u};
                         p = j;
                         dybuf.clear();
                         do {
                             dybuf << fmt.subview(p, k - p);
+                            update_spec(spec_pos, dybuf, k - p);
                             // 动态参数必须为 空的 "{}" 或 带索引的 "{n}"
                             while (++k != i && fmt[k] == ' ');  // 前空格
                             // 指定索引
@@ -694,12 +696,10 @@ namespace xylu::xystring
                         }
                         while ((k = fmt.find('{', k, i)) != -1);
                         dybuf << fmt.subview(p, i - p);
-                        partfmt = dybuf.view();
+                        update_spec(spec_pos, dybuf, i - p);
+                        finish_spec(spec_pos, dybuf, spec);
                     }
-                    else partfmt = fmt.subview(j, i - j);
-
-                    /// 解析模式
-                    Format_Spec spec = parse_spec(partfmt);
+                    else spec = parse_spec(fmt.subview(j, i - j));
 
                     // 解析 env (禁止传递动态参数)
                     xyu::size_t cur = parse_env(spec.env, total);
@@ -740,12 +740,12 @@ namespace xylu::xystring
             while ((i = fmt.find('}', i)) != -1)
             {
                 // 不完整的模式 且 不是转义 '}'
+                ++i;
                 if constexpr (!XY_RELEASE)
                 {
-                    if (XY_UNLIKELY(i == fmt.size() - 1 || fmt[++i] != '}'))
+                    if (XY_UNLIKELY(i == fmt.size() || fmt[i] != '}'))
                         xyu::E_Format::abort_syntax_uncompleted_placeholder(XY_CurPos("FormatCore::parse_runtime"));
                 }
-                else ++i;
                 ++i;
                 --total; // 转义 '}'
             }
@@ -804,30 +804,32 @@ namespace xylu::xystring
                 if (fmt[++j] != '{')
                 {
                     i = fmt.find('}', j);
+
+                    Format_Spec spec;
                     // 查找动态参数
-                    StringView partfmt = fmt.subview(j, i - j);
                     if constexpr (dynamic)
                     {
                         k = j + 1;
                         if ((k = fmt.find('{', k, i)) != -1)
                         {
+                            xyu::uint spec_pos[4] {-1u, -1u, -1u, -1u};
                             p = j;
                             dybuf.clear();
                             do {
                                 dybuf << fmt.subview(p, k - p);
+                                update_spec(spec_pos, dybuf, k - p);
                                 // 动态参数必须为 空的 "{}" 或 带索引的 "{n}"
                                 while (++k != i && fmt[k] == ' ');  // 跳过前空格
                                 // 指定索引
                                 xyu::size_t cur;
-                                if (k != i) {
-                                    for (cur = 0;;) {
-                                        cur = cur * 10 + (fmt[k] - '0');
-                                        if (++k == i) break;
-                                        if (fmt[k] == ' ') { k = i; break; }
-                                    }
+                                if (k != i) for (cur = 0;;) {
+                                    cur = cur * 10 + (fmt[k] - '0');
+                                    if (++k == i) break;
+                                    if (fmt[k] == ' ') { k = i; break; }
                                 }
                                 else cur = index;
                                 dyfmts[cur](dybuf, pargs[cur]);
+
                                 // 更新参数
                                 if (!used[cur]) {
                                     if (cur == index) do ++index; while (index < sizeof...(Args) && used[index]);
@@ -839,12 +841,13 @@ namespace xylu::xystring
                             }
                             while ((k = fmt.find('{', k, i)) != -1);
                             dybuf << fmt.subview(p, i - p);
-                            partfmt = dybuf.view();
+                            update_spec(spec_pos, dybuf, i - p);
+                            finish_spec(spec_pos, dybuf, spec);
                         }
+                        else spec = parse_spec(fmt.subview(j, i - j));
                     }
+                    else spec = parse_spec(fmt.subview(j, i - j));
 
-                    /// 解析模式
-                    Format_Spec spec = parse_spec(partfmt);
                     // 解析 env
                     xyu::size_t cur = parse_idx(spec.env, index);
                     // 解析 lay
@@ -977,6 +980,7 @@ namespace xylu::xystring
         constexpr static Format_Spec parse_spec(StringView spec) noexcept
         {
             /// 解析模式
+            spec = spec.strip(' ');
             // 查找 '|' >> s1 , ':' >> s2 , '?' >> s3
             xyu::size_t s1 = spec.find('|');
             xyu::size_t s2 = spec.find(':');
@@ -986,11 +990,32 @@ namespace xylu::xystring
             xyu::size_t m3 = xyu::min(s3, spec.size());
             xyu::size_t m2 = xyu::min(s2, m3);
             xyu::size_t m1 = xyu::min(s1, m2);
-            StringView env = spec.subview(0, m1).strip(' ');
-            StringView lay = m2 == m1 ? StringView{} : spec.subview(m1 + 1, m2 - m1 - 1).rstrip(' ');
+            StringView env = spec.subview(0, m1);
+            StringView lay = m2 == m1 ? StringView{} : spec.subview(m1 + 1, m2 - m1 - 1);
             StringView rep = m3 == m2 ? StringView{} : spec.subview(m2 + 1, m3 - m2 - 1);
             StringView ex  = spec.size() == m3 ? StringView{} : spec.subview(m3 + 1, spec.size() - m3 - 1);
             return { env, lay, rep, ex };
+        }
+
+        // 动态格式符解析 - 更新
+        static void update_spec(xyu::uint(&pos)[4], String& dybuf, xyu::size_t len) noexcept
+        {
+            xyu::size_t start = dybuf.size() - len;
+            if (pos[3] != -1) return;
+            if (auto idx = dybuf.rfind('?', start); idx != -1) pos[3] = idx;
+            if (pos[2] != -1) return;
+            if (auto idx = dybuf.rfind(':', start, pos[1]); idx != -1) pos[2] = idx;
+            if (pos[1] != -1) return;
+            if (auto idx = dybuf.rfind('|', start, pos[2]); idx != -1) pos[1] = idx;
+            pos[0] = xyu::min(pos[3], pos[2], pos[1]);
+        };
+        // 动态格式符解析 - 完成
+        static void finish_spec(xyu::uint(&pos)[4], String& dybuf, Format_Spec& spec) noexcept
+        {
+            if (pos[3] != -1) spec.ex = dybuf.subview(pos[3] + 1);
+            if (pos[2] != -1) spec.rep = dybuf.subview(pos[2] + 1, pos[3]);
+            if (pos[1] != -1) spec.lay = dybuf.subview(pos[1] + 1, pos[2]);
+            spec.env = dybuf.subview(0, pos[0]).strip(' ');
         }
 
         /**
@@ -1078,7 +1103,11 @@ namespace xylu::xystring
                 // --模式阻断--
                 else if (c == ' ') newmode = 0;
                 // --未知参数--
-                else return -2;
+                else
+                {
+                    if (xyu::t_constant()) return -2;
+                    xyu::E_Format::abort_env_invalid_param(env, XY_CurPos("FormatCore::parse_env"));
+                }
             }
 
             // 返回索引
@@ -1166,6 +1195,18 @@ namespace xylu::xystring
             xyu::size_t width = 0;
             for (xyu::size_t i = ia + 1; i < layout.size(); ++i)
             {
+                if (layout[i] == ' ')
+                {
+                    if (XY_DEBUG || xyu::t_constant())
+                    {
+                        while (++i < layout.size()) if (layout[i] != ' ')
+                        {
+                            if (xyu::t_constant()) return -1;
+                            xyu::E_Format::abort_lay_width_not_number(XY_CurPos("FormatCore::parse_lay"));
+                        }
+                    }
+                    break;
+                }
                 if constexpr (XY_DEBUG) if (XY_UNLIKELY(!__::is_digit(layout[i])))
                 {
                     if (xyu::t_constant()) return -1;
